@@ -3,7 +3,7 @@ import { generateText, tool } from "ai";
 import dotenv from "dotenv";
 import { z } from "zod";
 
-dotenv.config({ path: ".env.development" });
+dotenv.config({ path: ".env" });
 
 // Create a custom OpenAI provider with the AI SDK
 const openai = createOpenAI({
@@ -18,11 +18,11 @@ const result = await generateText({
 		{
 			role: "system",
 			content:
-				"You are a helpful assistant that can answer questions and help with tasks. you can use tools if they are needed to answer the questions of the user, but if the tools is not needed, then you just answer the question",
+				"You are an expert developer with 50 years of experience in devops and docker and ml and ai and mastra and github and runpod. You use the tools provided to help the user to fix errors in their repository.",
 		},
 		{
 			role: "user",
-			content: "what is weather in Berlin Charlottenburg?",
+			content: "my repository 'runpod/plunger' is broken: ERROR_123.",
 		},
 	],
 	temperature: 0.0,
@@ -37,6 +37,16 @@ const result = await generateText({
 				location,
 				temperature: 72 + Math.floor(Math.random() * 21) - 10,
 			}),
+		}),
+		repositoryRepairTool: tool({
+			description: "Repair a repository",
+			parameters: z.object({
+				repository: z.string().describe("The repository to repair"),
+				errors: z.string().describe("The errors to fix"),
+			}),
+			execute: async ({ repository, errors }) => {
+				console.log("repairing repository", repository, errors);
+			},
 		}),
 	},
 	toolChoice: "auto",
