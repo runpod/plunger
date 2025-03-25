@@ -17,26 +17,52 @@ const result = await generateText({
 	messages: [
 		{
 			role: "system",
-			content:
-				"You are an expert developer with 50 years of experience in devops and docker and ml and ai and mastra and github and runpod. You use the tools provided to help the user to fix errors in their repository.",
+			content: `
+You are an expert developer with 50 years of experience in devops and docker and ml and ai and mastra and github and runpod. 
+You fix the errors until everything is resolved and provide the user with how you fixed the errors.
+
+# IMPORTANT
+
+follow these steps:
+
+1. always checkout the repository with the gitCheckoutTool, so you have the repository in your local machine
+2. check & fix the errors with the repositoryRepairTool
+3. provide the user with how you fixed the errors
+
+# output format
+
+\`\`\`json
+{
+	"repository": "runpod/plunger",
+	"errors": "ERROR_123",
+	"solution": "SOLUTION_123"
+}
+\`\`\`
+`,
 		},
 		{
 			role: "user",
-			content: "my repository 'runpod/plunger' is broken: ERROR_123.",
+			content: `my repository 'runpod/plunger' is broken: ERROR_123.`,
 		},
 	],
 	temperature: 0.0,
 	maxTokens: 1000,
 	tools: {
-		weather: tool({
-			description: "Get the weather in a location",
+		gitCheckoutTool: tool({
+			description: "Checkout a repository",
 			parameters: z.object({
-				location: z.string().describe("The location to get the weather for"),
+				repository: z.string().describe("The repository to checkout"),
 			}),
-			execute: async ({ location }) => ({
-				location,
-				temperature: 72 + Math.floor(Math.random() * 21) - 10,
-			}),
+			execute: async ({ repository }) => {
+				console.log("checking out repository", repository);
+
+				return `
+{
+	"repository": "${repository}",
+	"success": true
+}
+`;
+			},
 		}),
 		repositoryRepairTool: tool({
 			description: "Repair a repository",
@@ -46,6 +72,14 @@ const result = await generateText({
 			}),
 			execute: async ({ repository, errors }) => {
 				console.log("repairing repository", repository, errors);
+
+				return `
+{
+	"repository": "${repository}",
+	"success": true,
+	"report": "the error was fixed"
+}
+`;
 			},
 		}),
 	},
@@ -54,7 +88,7 @@ const result = await generateText({
 });
 
 try {
-	console.log(result);
+	console.log(JSON.stringify(result.response.messages, null, 2));
 	console.log(result.text);
 } catch (error) {
 	console.error("Error processing AI SDK stream:", error);
